@@ -1,0 +1,30 @@
+{
+faonVersion : "1.0",
+version     : "1.0.0",
+target: "https://msweep.flairy.jp/",
+title       : "スイーパー",
+	owner: "http://takaxi.vo-id.org/",
+	signature: "047e870adc81ce77741315536e3489fd49764bf9c440c82ede10f48a0e32dcb86d36c3f2e201457151407066d32b293b3150557ea907a62720b154b0b97d9a98",
+
+description : "スイーパーは、一人用の地雷探しゲームです。フィールドに隠された10個の地雷を、爆発させないように探し出してください。",
+icon        : "/images/msweep_128x128.png",
+icon_48        : "/images/msweep_48x48.png",
+top         : "/index.html",
+resources   : {
+    "/index.html": {
+        params : {
+            pid: {}
+            }
+        }
+    } ,
+hints     : {
+    window:{ 
+        maximizable : false,
+        minimizable : true,
+        resizable   : false,
+        draggable   : true,
+        width       : 318,
+        height      : 372
+        }
+    }
+}

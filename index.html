@@ -1,0 +1,550 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+    <title>flMaidoSweeper</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.flairy.jp/ring4/lib/fext-3.1.2-1/resources/css/ext-all.css" />
+
+	<script type="text/javascript" src="https://cdn.flairy.jp/ring4/lib/fext-3.1.2-1/adapter/ext/ext-base.js"></script>
+	<script type="text/javascript" src="https://cdn.flairy.jp/ring4/lib/fext-3.1.2-1/ext-all.js"></script>
+	<script type="text/javascript" src="https://kernel.flairy.jp/~~flairy~~/scripts/flairy.js?nomin"></script>
+	<script type="text/javascript" src="https://kernel.flairy.jp/~~flairy~~/scripts/flake.js?nomin"></script>
+    <script type="text/javascript" src="https://kernel.flairy.jp/~~flairy~~/scripts/flame.js?nomin"></script>
+
+
+    <style type="text/css">
+    <!--
+    .icon_info_bomb       { background-image:url('images/bomb_16x16.png') !important; background-repeat: no-repeat; }
+    .icon_info_clck       { background-image:url('images/clck_16x16.png') !important; background-repeat: no-repeat; }
+    .icon_msgbox_bomb     { background-image:url('images/bomb_32x32.png') !important; background-repeat: no-repeat; }
+    .icon_msgbox_smle     { background-image:url('images/smle_32x32.png') !important; background-repeat: no-repeat; }
+    .icon_btn_reset       { background-image:url('images/smle_16x16.png') !important; background-repeat: no-repeat; }
+    .icon_mine_area_bomb  { background-image:url('images/bomb_16x16.png') !important; background-repeat: no-repeat; }
+    .icon_mine_area_flag  { background-image:url('images/flag_16x16.png') !important; background-repeat: no-repeat; }
+    .x-btn-noicon .x-btn-small .x-btn-text
+        {
+        width       : 16px;
+        font-family : monospace;
+        font-weight : bold;
+        font-size   : 16px;
+        color       : inherit;
+        } 
+    -->
+    </style>
+    <script type="text/javascript">
+    <!--
+    var t_Area = function(){ return function()
+        {
+        var that = {}  ;
+        
+        // private
+        var m_HasMine = false ;
+        var m_AroundMine = 0 ;
+        var m_Dug = false ;
+        var m_Flag = false ;
+        
+        // public
+        var setMine = function() { m_HasMine = true ; };
+        that.setMine = setMine ;
+        
+        var hasMine = function() { return m_HasMine ; };
+        that.hasMine = hasMine ;
+        
+        var searchAround = function( areas )
+            {
+            var i ;
+            m_AroundMine = 0 ;
+            for( i = 0 ; i < areas.length ; ++i ) {
+                if( areas[i].hasMine() ) { ++ m_AroundMine ; }
+                }
+            };
+        that.searchAround = searchAround ;
+        
+        var getAroundMine = function() { return m_AroundMine ; } ;
+        that.getAroundMine = getAroundMine ;
+        
+        var dig = function()
+            {
+            if( m_Dug ) return false ;
+            m_Dug = true ;
+            if( m_AroundMine === 0 ) return true ;
+            return false ;
+            };
+        that.dig = dig ;
+        
+        var hasDug = function() { return m_Dug ; };
+        that.hasDug = hasDug ;
+        
+        var setFlag = function(isFlagRise)
+            {
+            var res = (m_Flag !== isFlagRise) ;
+            m_Flag = isFlagRise ;
+            return true ;
+            };
+        that.setFlag = setFlag ;
+        var getFlag = function() { return m_Flag };
+        that.getFlag = getFlag ;
+        
+        var clear = function()
+            {
+            m_HasMine = false ;
+            m_AroundMine = 0 ;
+            m_Dug = false ;
+            m_Flag = false ;
+            };
+        that.clear = clear ;
+        
+        return that ;
+        
+        };}();
+    
+    
+    var t_MineFld = function(){ return function( fldX , fldY , mineCnt )
+        {
+        var that = {} ;
+        
+        // private
+        var m_FldX = fldX ;
+        var m_FldY = fldY ;
+        var m_MineSetCnt = 0 ;
+        var m_MineSwpCnt = 0 ;
+        var m_DugCnt = 0 ;
+        var m_Areas = [] ;
+        var m_Around = [ [-1,-1], [+0,-1], [+1,-1],
+                         [-1,+0], /*x,y*/  [+1,+0],
+                         [-1,+1], [+0,+1], [+1,+1] ] ;
+        
+        var areaIndex = function( x , y )
+            {
+            return x + y * (fldX+2) ;
+            };
+        
+        var aroundAreas = function( x , y )
+            {
+            var i ;
+            var areas = [] ;
+            for( i = 0 ; i < m_Around.length ; ++i )
+                {
+                areas[i]
+                  = m_Areas[areaIndex(x+m_Around[i][0],y+m_Around[i][1])] ;
+                }
+            return areas ;
+            };
+        
+        var shuffle = function( arry , cnt )
+            {
+            var i ;
+            var sz ;
+            var p ;
+            var tmp ;
+            sz = arry.length ;
+            for( i = 0 ; i < cnt ; ++i )
+                {
+                p = i + Math.floor( Math.random() * (sz-i) );
+                tmp = arry[i] ;
+                arry[i] = arry[p] ;
+                arry[p] = tmp ;
+                }
+            return arry ;
+            };
+        
+        // public
+        var getFldX = function(){ return m_FldX ; };
+        that.getFldX = getFldX ;
+        
+        var getFldY = function() { return m_FldY ; };
+        that.getFldY = getFldY ;
+        
+        var getMineSetCnt= function(){ return m_MineSetCnt ; };
+        that.getMineSetCnt = getMineSetCnt ;
+        
+        var getMineSwpCnt= function(){ return m_MineSwpCnt ; };
+        that.getMineSwpCnt = getMineSwpCnt ;
+        
+        var isCompleted = function(){ return m_MineSetCnt == m_FldX * m_FldY - m_DugCnt ; };
+        that.isCompleted = isCompleted ;
+        
+        var setMines = function( excludeX , excludeY , func , ctx)
+            {
+            var minePoints = [] ;
+            
+            eachArea( function(x, y, area)
+                {
+                if( x !== excludeX || y !== excludeY )
+                    {
+                    minePoints.push( areaIndex(x,y) ) ;
+                    }
+                } ) ;
+            
+            shuffle( minePoints , m_MineSetCnt ) ;
+            
+            for( i = 0 ; i < m_MineSetCnt ; ++i )
+                {
+                m_Areas[minePoints[i]].setMine() ;
+                }
+            
+            eachArea( function(x, y, area)
+                {
+                area.searchAround( aroundAreas(x,y) ) ;
+                } ) ;
+            
+            dig( excludeX , excludeY , func , ctx ) ;
+            
+            };
+        that.setMines = setMines ;
+        
+        var dig = function( x , y , func , ctx )
+            {
+            var area ;
+            var expand ;
+            
+            area = m_Areas[areaIndex(x,y)] ;
+            if( area.hasDug() ) return false ;
+            if( area.getFlag() ) return false ;
+            if( area.hasMine() ) return true ;
+            
+            expand = area.dig() ;
+            ++ m_DugCnt ;
+            func( x , y , area , ctx ) ;
+            if( expand )
+                {
+                for( var i = 0 ; i < m_Around.length ; ++i )
+                    {
+                    dig( x+m_Around[i][0] , y+m_Around[i][1] , func , ctx ) ;
+                    }
+                }
+            return false ;
+            };
+        that.dig = dig ;
+        
+        var setFlag = function( x , y , isFlagRise , func , ctx )
+            {
+            var area = m_Areas[areaIndex(x,y)] ;
+            var changedFlag ;
+            
+            if( area.hasDug() ) return ;
+            if( (isFlagRise  && m_MineSwpCnt + 1 > m_MineSetCnt) ||
+                (!isFlagRise && m_MineSwpCnt - 1 < 0) ) return ;
+            
+            area = m_Areas[areaIndex(x,y)] ;
+            changedFlag = area.setFlag( isFlagRise ) ;
+            if( changedFlag )
+                {
+                func( x , y , area , ctx ) ;
+                m_MineSwpCnt += ( isFlagRise ? +1 : -1 ) ;
+                }
+            return ;
+            };
+        that.setFlag = setFlag ;
+        
+        var getFlag = function( x , y )
+            {
+            var area = m_Areas[areaIndex(x,y)] ;
+            return area.getFlag() ;
+            };
+        that.getFlag = getFlag ;
+        
+        var eachArea = function( func , ctx )
+            {
+            var x ;
+            var y ;
+            for( var y = 0 ; y < m_FldY ; ++y )
+                {
+                for( var x = 0 ; x < m_FldX ; ++x )
+                    {
+                    func( x , y , m_Areas[areaIndex(x,y)] , ctx ) ;
+                    }
+                }
+            };
+        that.eachArea = eachArea ;
+        
+        var clear = function( func , ctx )
+            {
+            eachArea( function( x , y , area , ctx )
+                {
+                area.clear() ;
+                func( x , y , area , ctx ) ;
+                }) ;
+            m_MineSwpCnt = 0 ;
+            m_DugCnt = 0 ;
+            };
+        that.clear = clear ;
+        
+        // construct
+        var x ;
+        var y ;
+        for( y = -1 ; y <= m_FldY ; ++y )
+            {
+            for( x = -1 ; x <= m_FldX ; ++x )
+                {
+                m_Areas[areaIndex(x,y)] = t_Area() ;
+                if( x === -1 || x === m_FldX || y === -1 || y === m_FldY )
+                    {
+                    m_Areas[areaIndex(x,y)].dig() ;
+                    }
+                }
+            }
+        m_MineSetCnt = mineCnt ;
+        
+        return that ;
+        };}();
+    // -->
+    </script>
+    <script type="text/javascript">
+    <!--
+    var g_MineFld ;
+    var g_GameStart ;
+    var g_GamePanel ;
+    var g_FldX = 9 ;
+    var g_FldY = 9 ;
+    var g_MineCnt = 10 ;
+    var g_HintColor = { 0:"#000000", 1:"#0000ff", 2:"#008000", 3:"#ff0000", 4:"#000080",
+                        5:"#800000", 6:"#008080", 7:"#800080", 8:"#808000" } ;
+    var g_TimerTask ;
+    
+    function openArea( x , y , area , ctx )
+        {
+        area.dig() ;
+        dispArea( x , y , area , ctx ) ;
+        }
+    
+    function resetArea()
+        {
+        g_MineFld.clear( dispArea ) ;
+        g_GameStart = false ;
+        g_GamePanel.findById("MineDisp").setValue( g_MineFld.getMineSetCnt() ) ;
+        txt = g_GamePanel.findById("TimeDisp").setValue(0) ;
+        }
+    
+    function dispArea( x , y , area , ctx )
+        {
+        var id = x + "_" + y ;
+        var btn = g_GamePanel.findById(id) ;
+        var mineCnt ;
+        if(btn)
+            {
+            if( area.hasDug() )
+                {
+                btn.addClass( "x-btn-pressed" ) ;
+				btn.pressed = true;  // ext 3.1.2ではこの行が必要
+                if( area.hasMine() )
+                    {
+                    btn.setText("") ;
+                    btn.setIconClass( "icon_mine_area_bomb" ) ;
+                    }
+                else
+                    {
+                    mineCnt = area.getAroundMine() ;
+                    if( mineCnt > 0 ) { btn.setText( mineCnt ) ; }
+                    else              { btn.setText( "" ) ; }
+                    btn.el.dom.style.color = g_HintColor[mineCnt] ;
+                    btn.setIconClass( "" ) ;
+                    }
+                }
+            else if( area.getFlag() )
+                {
+                btn.removeClass( "x-btn-pressed" ) ;
+                btn.setText("") ;
+                btn.setIconClass( "icon_mine_area_flag" ) ;
+                }
+            else 
+                {
+                btn.removeClass( "x-btn-pressed" ) ;
+                btn.setText( "" ) ;
+                btn.setIconClass( "" ) ;
+                }
+            }
+        }
+    
+    function onClickArea( btn , evt , rbtn )
+        {
+        var pos = btn.id.split('_') ;
+        var x = parseInt(pos[0]) ;
+        var y = parseInt(pos[1]) ;
+        var clickRBtn = ( evt.shiftKey || evt.ctrlKey || rbtn );
+        var txt , t ;
+        if( clickRBtn )
+            {
+            g_MineFld.setFlag(x,y,!g_MineFld.getFlag(x,y),dispArea) ;
+            g_GamePanel.findById("MineDisp").setValue(
+                g_MineFld.getMineSetCnt() - g_MineFld.getMineSwpCnt() ) ;
+            }
+        else if( g_GameStart )
+            {
+            if( g_MineFld.dig(x,y,dispArea) )
+                {
+                g_GameStart = false ;
+                g_MineFld.eachArea( openArea ) ;
+                Ext.MessageBox.show(
+                    {
+                    title   : "Maido! Sweeper" ,
+                    msg     : "Bang!!<br>Game Over..." ,
+                    buttons : Ext.MessageBox.OK ,
+                    icon    : "icon_msgbox_bomb" ,
+                    fn      : resetArea
+                    });
+                }
+            else if( g_MineFld.isCompleted() )
+                {
+                g_GameStart = false ;
+                txt = g_GamePanel.findById("TimeDisp") ;
+                t = txt.getValue() ;
+                Ext.MessageBox.show(
+                    {
+                    title   : "Maido! Sweeper" ,
+                    msg     : "Congratulations!!<br>Time : " + t + "[sec]" ,
+                    buttons : Ext.MessageBox.OK ,
+                    icon    : "icon_msgbox_smle" ,
+                    fn      : resetArea
+                    });
+                }
+            }
+        else
+            {
+            g_MineFld.setMines(x,y,dispArea) ;
+            g_GameStart = true ;
+            g_TimerTask.delay(1000) ;
+            }
+        evt.preventDefault();
+        return false ;
+        }
+    
+    function onClickReset( btn , evt )
+        {
+        resetArea() ;
+        }
+    
+    var onAreaMouseDown = function(evt)
+        {
+        if( evt.button !== 0 )
+            {
+            evt.preventDefault(); 
+            onClickArea( this , evt , true ) ;
+            }
+        } ;
+    
+    Ext.onReady(function()
+        {
+          app = new Flame.Application({meta: {title: "スイーパー"}});
+        
+        g_MineFld = t_MineFld( g_FldX , g_FldY , g_MineCnt ) ;
+        g_GameStart = false ;
+        
+        g_GamePanel = new Ext.Panel
+            ({
+            id           : 'GamePanel',
+            renderTo     : 'MINE_PANEL',
+            frame        : true ,
+            layout       : 'table',
+            layoutConfig : { columns   : g_FldX },
+            defaults     : { xtype     : 'button' ,
+                             autoWidth : false ,
+                             width    : 32 ,
+                             height   : 32 ,
+                             handler  : onClickArea ,
+                             onMouseDown : onAreaMouseDown
+                             } ,
+            items        : function( fldX , fldY , mineCnt )
+                               {
+                               var x , y ;
+                               var arry = [] ;
+                               var infoRow = 
+                                   {
+                                   id           : "InfoDisp" ,
+                                   xtype        : "panel" ,
+                                   layout       : 'hbox',
+                                   width        : "100%",
+                                   items        :
+                                       [
+                                       { xtype      : "panel",
+                                         flex       : 1 } ,
+                                       { id         : "MineDispIcon",
+                                         xtype      : "panel",
+                                         cls        : "icon_info_bomb",
+                                         width      : 20,
+                                         height     : 16 ,
+                                         style      : "margin-top:4px;" } ,
+                                       { id         : "MineDisp" ,
+                                         xtype      : "textfield" ,
+                                         readOnly   : true,
+                                         value      : mineCnt ,
+                                         height     : 24 ,
+                                         maxLength  : 15 ,
+                                         width      : 32 * 2 ,
+                                         style      : "text-align: center;"},
+                                       { xtype      : "panel",
+                                         width      : 16 ,
+                                         height     : 16 },
+                                       { id         : "ResetBtn" ,
+                                         xtype      : "button",
+                                         width      : 16 ,
+                                         height     : 16 ,
+                                         iconCls    : "icon_btn_reset" ,
+                                         handler    : onClickReset },
+                                       { xtype      : "panel",
+                                         width      : 16 ,
+                                         height     : 16 },
+                                       { id         : "TimeDispIcon",
+                                         xtype      : "panel",
+                                         cls        : "icon_info_clck",
+                                         width      : 20,
+                                         height     : 16 ,
+                                         style      : "margin-top:4px;" } ,
+                                       { id         : "TimeDisp" ,
+                                         xtype      : "textfield" ,
+                                         readOnly   : true,
+                                         value      : "0",
+                                         height     : 24 ,
+                                         maxLength  : 15 ,
+                                         width      : 32 * 2 ,
+                                         style      : "text-align: center;"} ,
+                                       { xtype      : "panel",
+                                         flex       : 1 }
+                                       ] } ;
+                               arry.push(
+                                   {
+                                   colspan      : fldX ,
+                                   xtype        : "panel",
+                                   colspan      : fldX ,
+                                   layout       : 'fit',
+                                   style        : "text-align:center;" ,
+                                   width        : "100%",
+                                   items        : infoRow
+                                   }) ;
+                               arry.push(
+                                   {
+                                   xtype        : "panel",
+                                   colspan      : fldX ,
+                                   width        : "100%",
+                                   height       : 3
+                                   }) ;
+                               for( y = 0 ; y < fldY ; ++ y )
+                                   {
+                                   for( x = 0 ; x < fldX ; ++ x ) arry.push( { id : x + "_" + y } ) ;
+                                   }
+                               return arry ;
+                               } ( g_FldX , g_FldX , g_MineCnt )
+            });
+        
+        g_TimerTask = new Ext.util.DelayedTask( function()
+            {
+            var t ;
+            var txt ;
+            if( g_GameStart )
+                {
+                txt = g_GamePanel.findById("TimeDisp") ;
+                txt.setValue( parseInt(txt.getValue()) + 1 ) ;
+                g_TimerTask.delay(1000) ;
+                }
+            } ) ;
+        
+        Ext.getBody().on("contextmenu",function(e){ e.preventDefault(); } ) ;
+        });
+    //-->
+    </script>
+  </head>
+  <body style="background-color:white; ">
+      <table><tr><td><div id="MINE_PANEL"></div></td></tr></table>
+  </body>
+</html>
