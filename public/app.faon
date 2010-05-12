@@ -1,7 +1,7 @@
 {
 faonVersion : "1.0",
 version     : "1.0.0",
-target: "http://msweep.flairy.jp/",
+target: "https://msweep.flairy.jp/",
 title       : "スイーパー",
 	owner: "http://arihomto.vo-id.org/",
 	signature: "55729e83cc56cf0096c4a33d3abd7c69de6a5ab5ee8a754cfeb73e4349e389cca4b769379f4456bf0d801f164dab80c3ad7a22173df1d6e8c01fe7bc6585ab6f",
